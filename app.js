@@ -23,7 +23,7 @@ const tasks = [
   },
   {
     _id: "5d2ca9e29c8a94095564788e0",
-    completed: false,
+    completed: true,
     body:
       "Aliquip cupidatat ex adipisicing veniam do tempor. Lorem nulla adipisicing et esse cupidatat qui deserunt in fugiat duis est qui. Est adipisicing ipsum qui cupidatat exercitation. Cupidatat aliqua deserunt id deserunt excepteur nostrud culpa eu voluptate excepteur. Cillum officia proident anim aliquip. Dolore veniam qui reprehenderit voluptate non id anim.\r\n",
     title:
@@ -33,15 +33,14 @@ const tasks = [
 
 (function (arrOfTasks) {
   const objOfTask = arrOfTasks.reduce((acc, task) => {
-    task["active"] = false;
     acc[task._id] = task;
     return acc;
   }, {});
+  let activeFilter = "all";
   //Elem UI
   const listContainer = document.querySelector(
     ".tasks-list-section .list-group"
   );
-  const buttonActiveTask = document.querySelector(".btn-primary");
   const buttonNoActiveTask = document.querySelector(".btn-secondary");
   const buttonAllTask = document.querySelector(".btn-danger");
 
@@ -53,21 +52,38 @@ const tasks = [
   checkArrTask(objOfTask);
   form.addEventListener("submit", onFormSubmitHandler);
   listContainer.addEventListener("click", onDeleteHandler);
-  listContainer.addEventListener("click", changeActiveTaskHandler);
-  buttonActiveTask.addEventListener("click", onActiveTaskHandler);
+  listContainer.addEventListener("click", toggleTaskHandler);
   buttonNoActiveTask.addEventListener("click", noActiveTaskHandler);
   buttonAllTask.addEventListener("click", allTask);
+
+  //функция   рендера формы
   function renderAllTasks(taskList) {
     if (!taskList) {
       console.log("Передайте список задача");
     }
+    listContainer.textContent = "";
     const fragment = document.createDocumentFragment();
-    Object.values(taskList).forEach((task) => {
+    const toRenderTask = [];
+    if (activeFilter === "all") {
+      const active = Object.values(taskList).filter((task) => !task.completed);
+      const complited = Object.values(taskList).filter(
+        (task) => task.completed
+      );
+      toRenderTask.push(...active.concat(complited));
+    } else {
+      toRenderTask.push(
+        ...Object.values(taskList).filter((task) => !task.completed)
+      );
+      console.log(toRenderTask);
+    }
+    toRenderTask.map((task) => {
       const li = listItemTemplate(task);
       fragment.append(li);
     });
+
     listContainer.append(fragment);
   }
+  //функция которая меняет в task key on complited
   function changeActiveTask(id) {
     Object.values(objOfTask).forEach((elem) => {
       if (elem._id === id) {
@@ -76,16 +92,13 @@ const tasks = [
       }
     });
   }
-
-  function changeActiveTaskHandler({ target }) {
+  //
+  function toggleTaskHandler({ target }) {
     if (target.classList.contains("task-active")) {
       const parent = target.closest("[data-task-id]");
       const id = parent.dataset.taskId;
       changeActiveTask(id);
-      console.log();
-      listContainer.textContent = "";
       renderAllTasks(objOfTask);
-      console.log(objOfTask);
     }
   }
 
@@ -97,7 +110,7 @@ const tasks = [
     }
   }
 
-  function listItemTemplate({ _id, title, body, active }) {
+  function listItemTemplate({ _id, title, body, completed }) {
     const li = document.createElement("li");
     li.classList.add(
       "list-group-item",
@@ -112,7 +125,7 @@ const tasks = [
     span.style.fontWeight = "bold";
     const taskActive = document.createElement("button");
     taskActive.textContent = "Task active";
-    if (active === true) {
+    if (completed === true) {
       taskActive.classList.add("btn", "btn-warning", "ml-auto", "task-active");
     } else {
       taskActive.classList.add("btn", "btn-danger", "ml-auto", "task-active");
@@ -164,10 +177,12 @@ const tasks = [
     delete objOfTask[id];
     return isConfirm;
   }
+  //удаление задачи через  HTML
   function deleteTaskFromHTML(confirmed, el) {
     if (!confirmed) return;
     el.remove();
   }
+  //новешивание обработчика события on deleteHendler
   function onDeleteHandler({ target }) {
     if (target.classList.contains("delete-btn")) {
       const parent = target.closest("[data-task-id]");
@@ -177,25 +192,14 @@ const tasks = [
       checkArrTask(objOfTask);
     }
   }
-  function onActiveTaskHandler() {
-    const activeTask = Object.values(objOfTask).filter(
-      (elem) => elem.completed === true
-    );
-    //удаляем содержимое записываем нвовое
-    listContainer.textContent = "";
-    renderAllTasks(activeTask);
-  }
+  //функция для отрисовки не завершенных задач
   function noActiveTaskHandler() {
-    const noActiveTask = Object.values(objOfTask).filter(
-      (elem) => elem.completed === false
-    );
-    listContainer.textContent = "";
-    renderAllTasks(noActiveTask);
+    activeFilter = "active";
+    renderAllTasks(objOfTask);
   }
+  //функция отрисовки всех задач
   function allTask() {
-    const activeTask = Object.values(objOfTask);
-    //удаляем содержимое записываем нвовое
-    listContainer.textContent = "";
-    renderAllTasks(activeTask);
+    activeFilter = "all";
+    renderAllTasks(objOfTask);
   }
 })(tasks);

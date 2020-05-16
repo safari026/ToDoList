@@ -1,4 +1,3 @@
- .task-active .active{
-  background-color:black;
-  color: white;
+.container{
+  max-width: 500px;
 }
